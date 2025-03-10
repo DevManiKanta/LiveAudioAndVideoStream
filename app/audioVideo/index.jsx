@@ -37,9 +37,10 @@ export default function VideoScreen() {
       <View style={styles.controlsContainer}>
         {/* Button to toggle play/pause */}
         <Button
-          title={isPlaying ? "Pause" : "Play"}
+          title={isPlaying ? "Pause" : "Play-Recorded-Video"}
           onPress={togglePlayPause}
         />
+        <Button title={"Play-Recorded-Audio"} />
       </View>
       <Button title={"Back-to-VideoRecord"} onPress={() => router.back()} />
       {/* Display the playback status */}
@@ -65,64 +66,69 @@ const styles = StyleSheet.create({
     padding: 10,
   },
 });
-// import { useEffect, useState } from "react";
-// import { View, StyleSheet, Button, Alert } from "react-native";
+// import React, { useState } from "react";
+// import { View, Button, Alert, StyleSheet } from "react-native";
+// import * as FileSystem from "expo-file-system";
 // import { Audio } from "expo-av";
 
-// export default function App() {
-//   const [sound, setSound] = useState();
+// const audioSource =
+//   " file:///var/mobile/Containers/Data/Application/846A618A-A887-4078-A0A4-4B48509F9D2C/Documents/audioData.wav";
+// export default function AudioPlayer() {
+//   const [sound, setSound] = useState(null);
 
-//   async function playSound() {
-//     console.log("Loading Sound");
-//     const soundUri =
-//       "file:///var/mobile/Containers/Data/Application/41407F9F-668B-4620-ACB7-9467809F4B95/Library/Caches/audio.wav"; // Path to the audio file
-
+//   const playAudio = async () => {
 //     try {
-//       // Check if the sound is already loaded
-//       if (sound) {
-//         await sound.unloadAsync(); // Unload the existing sound
+//       console.log("🔹 Checking file existence...");
+//       const fileInfo = await FileSystem.getInfoAsync(audioSource);
+//       console.log("File Info:", fileInfo);
+
+//       if (!fileInfo.exists) {
+//         console.error("❌ File does not exist:", audioSource);
+//         Alert.alert("Error", "Audio file not found!");
+//         return;
 //       }
 
-//       // Load the sound
-//       const { sound: newSound } = await Audio.Sound.createAsync({
-//         uri: soundUri,
-//       });
-//       setSound(newSound); // Save the sound object to state
-//       console.log("Sound Loaded");
+//       console.log("✅ File exists, loading audio...");
+//       // Stop and unload previous sound if exists
+//       if (sound) {
+//         await sound.stopAsync();
+//         await sound.unloadAsync();
+//         setSound(null);
+//       }
 
-//       // Play the sound
-//       await newSound.playAsync();
-//       console.log("Sound Playing");
-//     } catch (error) {
-//       console.error("Error playing sound:", error);
-//       Alert.alert(
-//         "Error",
-//         "Failed to play sound. Please check the file format and URI."
+//       // Load and play the audio file
+//       const { sound: newSound } = await Audio.Sound.createAsync(
+//         { uri: audioSource },
+//         { shouldPlay: true }
 //       );
+
+//       setSound(newSound);
+//       console.log("🎵 Playing audio...");
+
+//       // Cleanup when audio finishes
+//       newSound.setOnPlaybackStatusUpdate(async (status) => {
+//         if (status.didJustFinish) {
+//           console.log("✅ Playback finished, unloading...");
+//           await newSound.unloadAsync();
+//           setSound(null);
+//         }
+//       });
+//     } catch (error) {
+//       console.error("❌ Error playing audio:", error);
+//       Alert.alert("Error", "Could not play audio!");
 //     }
-//   }
-
-//   useEffect(() => {
-//     return () => {
-//       if (sound) {
-//         console.log("Unloading Sound");
-//         sound.unloadAsync(); // Unload the sound when the component unmounts
-//       }
-//     };
-//   }, [sound]);
-
+//   };
 //   return (
 //     <View style={styles.container}>
-//       <Button title="Play Sound" onPress={playSound} />
+//       <Button title="Play Audio" onPress={playAudio} />
 //     </View>
 //   );
 // }
-
 // const styles = StyleSheet.create({
 //   container: {
 //     flex: 1,
 //     justifyContent: "center",
-//     backgroundColor: "#ecf0f1",
-//     padding: 10,
+//     alignItems: "center",
+//     backgroundColor: "#f5f5f5",
 //   },
 // });

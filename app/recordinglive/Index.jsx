@@ -399,6 +399,7 @@
 //   },
 // });
 // export default Index;
+
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -419,14 +420,12 @@ import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { useRouter } from "expo-router";
 import { Audio } from "expo-av";
-
 // Constants for audio processing
 const BUFFER_SIZE = 1024; // Size of the audio buffer
 const SAMPLE_RATE = 44100; // Sample rate for audio recording (44.1 kHz)
 const THRESHOLD_MULTIPLIER = 5; // Multiplier for peak detection threshold
 const GLOBAL_AUDIO_ARRAY_SIZE = 44100 * 60 * 10; // Pre-allocate space for 10 minutes of audio
 const GLOBAL_AUDIO = new Int16Array(GLOBAL_AUDIO_ARRAY_SIZE); // Global array to store audio data
-
 // Function to decode base64 PCM data into Int16Array format for audio processing
 const decodePCMData = (pcmDataBase64) => {
   const binaryString = atob(pcmDataBase64); // Decode base64 into a binary string
@@ -442,7 +441,6 @@ const decodePCMData = (pcmDataBase64) => {
   }
   return [pcm, sum]; // Return the PCM data and the sum of absolute values
 };
-
 // Function to calculate a rough median of an array
 const calculateRoughMedian = (arr) => {
   if (arr.length === 0) return 0; // Return 0 if the array is empty
@@ -450,7 +448,6 @@ const calculateRoughMedian = (arr) => {
   const mid = Math.floor(sorted.length / 2); // Find the middle index
   return sorted[mid]; // Return the median value
 };
-
 const Index = () => {
   // Refs and state variables
   const videoEndTimeRef = useRef(null); // ✅ Store videoEndTime globally
@@ -463,19 +460,18 @@ const Index = () => {
   const [chartData, setChartData] = useState([]); // State to store audio data for visualization
   const [videoUri, setVideoUri] = useState(null); // State to store the recorded video URI
   const [secondPeakTime, setSecondPeakTime] = useState(null); // State to store the second peak time
+  const audioBuffer = [];
   const sumChunkList = []; // Array to store sum values for each audio chunk
   const chunkTimeList = []; // Array to store timestamps for each audio chunk
-  const audioBuffer = []; // Buffer to store incoming audio chunks
+  // const audioBuffer = []; // Buffer to store incoming audio chunks
   const globalVideoStore = []; // Array to store recorded video paths
   let firstChunkReadTime = null; // Timestamp of the first audio chunk
   let gap = null; // Gap between pressing start and first chunk
   let pressedStartTime = null; // Timestamp when start is pressed
-
   // Camera and permissions
   const device = useCameraDevice("back"); // Get the back camera device
   const { hasPermission, requestPermission } = useCameraPermission(); // Camera permission hook
   const router = useRouter(); // Router for navigation
-
   // Request camera and microphone permissions on mount
   useEffect(() => {
     const requestPermissions = async () => {
@@ -491,7 +487,6 @@ const Index = () => {
     };
     requestPermissions();
   }, [hasPermission, requestPermission]);
-
   // Timer logic for video recording
   useEffect(() => {
     let timerInterval;
@@ -525,16 +520,15 @@ const Index = () => {
             const videoUriTime = Date.now(); // Capture when video URI is generated
             videoEndTimeRef.current = videoUriTime; // ✅ Store videoEndTime globally
             console.log("Video URI generated at:", videoUriTime, "ms");
-
             const videoProcessingTime = videoUriTime - stopTimeRef.current;
             console.log(
               "Time taken to generate video URI after stop:",
               videoProcessingTime,
               "ms"
             );
-
             setVideoUri(path); // Update videoUri state
             globalVideoStore.push(path); // Store in global video store
+            console.log("VideoPath", path);
             router.push({
               pathname: "/audioVideo",
               params: { path }, // Pass the recorded video URI as a query parameter
@@ -542,11 +536,11 @@ const Index = () => {
 
             // If audio is also completed, log both times
             if (audioEndTime !== null) {
-              console.log(
-                "Total time taken:\n",
-                `Video: ${videoProcessingTime}ms\n`,
-                `Audio: ${audioEndTime - stopTimeRef.current}ms`
-              );
+              // console.log(
+              //   "Total time taken:\n",
+              //   `Video: ${videoProcessingTime}ms\n`,
+              //   `Audio: ${audioEndTime - stopTimeRef.current}ms`
+              // );
             }
           } else {
             console.log("No video path found");
@@ -559,6 +553,7 @@ const Index = () => {
           Alert.alert("Recording Error", "An error occurred while recording.");
         },
       });
+      // T
       setIsRecording(true); // Set recording state to true
       setTimeLeft(300); // Reset time left to 5 minutes
       setWarningShown(false); // Reset warning state
@@ -574,27 +569,24 @@ const Index = () => {
       return;
     }
     stopTimeRef.current = Date.now(); // ✅ Store stop time globally
-
     try {
+      //Start Time
       await camera.current.stopRecording();
       setIsRecording(false);
       setTimeLeft(300);
       setWarningShown(false);
-
       const videoGeneratedTime = Date.now();
       console.log(
         "📹 Video URI generated after",
         videoGeneratedTime - stopTimeRef.current,
         "ms"
       );
-
       const audioGeneratedTime = Date.now();
       console.log(
         "🎵 Audio chunks processed after",
         audioGeneratedTime - stopTimeRef.current,
         "ms"
       );
-
       playAudio();
     } catch (error) {
       Alert.alert("Recording Error", "Failed to stop recording.");
@@ -662,13 +654,10 @@ const Index = () => {
       chunkTimeList.push(Date.now() - firstChunkReadTime); // Record timestamp
       sumChunkList.push(new Int16Array(sum)); // Add sum to the list
       setChartData([...sumChunkList]); // Update chart data
-
       // Track chunk count
       chunkCounter++;
-
       // Track time between chunks
       const currentChunkTime = Date.now();
-
       if (lastChunkTime !== null) {
         const timeBetweenChunks = currentChunkTime - lastChunkTime;
         console.log(
@@ -677,13 +666,10 @@ const Index = () => {
           } and chunk ${chunkCounter}: ${timeBetweenChunks} ms`
         );
       }
-
       lastChunkTime = currentChunkTime; // Update last chunk time
-
       // Update the last audio chunk timestamp
       audioEndTime = Date.now();
       console.log("Last audio chunk processed at:", audioEndTime, "ms");
-
       if (stopTimeRef.current !== null) {
         const audioProcessingTime = audioEndTime - stopTimeRef.current;
         console.log(
@@ -692,22 +678,19 @@ const Index = () => {
           "ms"
         );
       }
-
       console.log(`Total Chunks Generated: ${chunkCounter}`);
-
       // If video has also completed, log both times
       if (videoEndTimeRef.current !== null) {
-        console.log(
-          "Total time taken:\n",
-          `Video: ${videoEndTimeRef.current - stopTimeRef.current}ms\n`,
-          `Audio: ${audioProcessingTime}ms`
-        );
+        // console.log(
+        //   "Total time taken:\n",
+        //   `Video: ${videoEndTimeRef.current - stopTimeRef.current}ms\n`,
+        //   `Audio: ${audioProcessingTime}ms`
+        // );
       }
     } catch (error) {
       console.error("Audio processing error:", error);
     }
   };
-
   // Function to save audio data to a file
   const saveDataToFile = async () => {
     try {
@@ -715,8 +698,9 @@ const Index = () => {
         data: Array.from(audioBuffer), // Convert Int16Array to a regular array
         sampleRate: SAMPLE_RATE,
       });
-      const fileUri = `${FileSystem.documentDirectory}audioData.json`;
-      await FileSystem.writeAsStringAsync(fileUri, jsonData); // Save as JSON file
+      const audiofileUri = `${FileSystem.documentDirectory}audioData.wav`;
+      await FileSystem.writeAsStringAsync(audiofileUri, jsonData);
+      console.log("CHECKAUDIO", audiofileUri);
     } catch (error) {
       console.error("Error saving audio data:", error);
     }
@@ -761,14 +745,12 @@ const Index = () => {
   const encodeWAV = (samples, sampleRate) => {
     const buffer = new ArrayBuffer(44 + samples.length * 2);
     const view = new DataView(buffer);
-
     // WAV Header
     function writeString(view, offset, string) {
       for (let i = 0; i < string.length; i++) {
         view.setUint8(offset + i, string.charCodeAt(i));
       }
     }
-
     writeString(view, 0, "RIFF"); // ChunkID
     view.setUint32(4, 36 + samples.length * 2, true); // ChunkSize
     writeString(view, 8, "WAVE"); // Format
@@ -794,50 +776,30 @@ const Index = () => {
 
   // Function to play the saved audio file
   const playAudio = async () => {
-    if (sumChunkList.length === 0) {
-      console.warn("No audio chunks to play.");
-      return;
+    try {
+      const wavFileUri = `${FileSystem.cacheDirectory}audio.wav`; // Path to the WAV file
+      console.log("AudioWavFormat", wavFileUri);
+      const fileInfo = await FileSystem.getInfoAsync(wavFileUri); // Check if the file exists
+      if (!fileInfo.exists) {
+        // console.error("Audio file does not exist:", wavFileUri);
+        return;
+      }
+      console.log("WAV File Info:", fileInfo);
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: wavFileUri }, // URI of the audio file
+        { shouldPlay: true } // Automatically play the audio
+      );
+      console.log("Audio loaded, playing now...");
+      sound.setOnPlaybackStatusUpdate(async (status) => {
+        if (status.didJustFinish) {
+          console.log("Playback finished, unloading...");
+          await sound.unloadAsync(); // Unload the sound to free up resources
+        }
+      });
+    } catch (error) {
+      console.error("Error playing audio:", error);
     }
-    console.log(`🎵 Playing ${audioChunks.length} audio chunks...`);
-
-    const wavBlob = encodeWAV(
-      Int16Array.from(sumChunkList.flat()),
-      SAMPLE_RATE
-    );
-    const audioURL = URL.createObjectURL(wavBlob);
-    const audio = new Audio(audioURL);
-
-    audio.play();
-
-    audio.onended = () => {
-      console.log("✅ Finished playing recorded chunks.");
-    };
-
-    // try {
-    //   const wavFileUri = `${FileSystem.cacheDirectory}audio.wav`; // Path to the WAV file
-    //   console.log("AudioWavFormat", wavFileUri);
-    //   const fileInfo = await FileSystem.getInfoAsync(wavFileUri); // Check if the file exists
-    //   if (!fileInfo.exists) {
-    //     console.error("Audio file does not exist:", wavFileUri);
-    //     return;
-    //   }
-    //   console.log("WAV File Info:", fileInfo);
-    //   const { sound } = await Audio.Sound.createAsync(
-    //     { uri: wavFileUri }, // URI of the audio file
-    //     { shouldPlay: true } // Automatically play the audio
-    //   );
-    //   console.log("Audio loaded, playing now...");
-    //   sound.setOnPlaybackStatusUpdate(async (status) => {
-    //     if (status.didJustFinish) {
-    //       console.log("Playback finished, unloading...");
-    //       await sound.unloadAsync(); // Unload the sound to free up resources
-    //     }
-    //   });
-    // } catch (error) {
-    //   console.error("Error playing audio:", error);
-    // }
   };
-
   // Function to share the saved file
   const shareJsonFile = async (fileUri) => {
     try {
@@ -853,7 +815,11 @@ const Index = () => {
 
   // Handle case when no camera device is available
   if (device == null) {
-    return <Text>No camera device available</Text>;
+    return (
+      <View style={{ alignItems: "center", justifyContent: "center" }}>
+        <Text>No camera device available</Text>
+      </View>
+    );
   }
 
   // Handle case when permission is denied
@@ -874,7 +840,7 @@ const Index = () => {
         device={device}
         isActive={true}
         video={true}
-        audio={false} // Disable audio in camera
+        audio={true} // Enable audio in camera
       />
       <View style={styles.overlay}>
         <Button title="Back-to-Audio-record" onPress={() => router.back()} />
@@ -908,7 +874,6 @@ const Index = () => {
     </View>
   );
 };
-
 // Styles for the component
 const styles = StyleSheet.create({
   container: {
